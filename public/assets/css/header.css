@@ -474,7 +474,7 @@
         .modal-overlay {
             position: fixed;
             inset: 0;
-            z-index: 1000;
+            z-index: 1400;
             background: rgba(30,87,40,0.35);
             backdrop-filter: blur(4px);
             display: flex;
@@ -604,7 +604,10 @@
             border-color: var(--green);
             box-shadow: 0 0 0 3px rgba(45,122,58,0.10);
         }
-        
+        .form-group textarea {
+        resize: vertical;
+        min-height: 80px;
+        }
         .form-actions {
             display: flex;
             gap: 10px;
@@ -1228,7 +1231,25 @@
             /* Modals */
             .modal { max-height: 95vh; border-radius: 14px; }
             .modal-body { padding: 16px 18px; }
-            .modal-header { padding: 16px 18px 14px; }
+            .modal-header {
+                padding: 16px 18px 14px;
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+            .modal-header h2 {
+                font-size: 1.1rem;
+                flex: 1 1 auto;
+                min-width: 0;
+            }
+            .modal-header > div {
+                width: 100%;
+                flex-wrap: wrap;
+                justify-content: flex-end;
+            }
+            .modal-header .btn-secondary {
+                padding: 7px 12px;
+                font-size: 0.78rem;
+            }
             .calendar-body { padding: 12px; gap: 12px; }
             .hive-manager-item { flex-wrap: wrap; gap: 8px; }
             .user-manager-item { flex-wrap: wrap; gap: 8px; }

@@ -473,7 +473,7 @@
                     
 <div class="form-group">
                         <label><i class="fas fa-layer-group"></i> Colony ID </label>
-                        <input type="number" id="insp_num_colonies" placeholder="Enter number of colony">
+                        <input type="number" id="insp_num_colonies" placeholder="Enter number of colony" min="0" step="1" oninput="sanitizeUnsignedIntColony(this)">
                     </div>
 
                     <div class="form-grid-2">
@@ -492,12 +492,12 @@
                     <div class="form-grid-2">
                         <div class="form-group">
                             <label><i class="fas fa-th-large"></i> Comb Frames (+/-)</label>
-                            <input type="number" id="insp_comb_frames_change" placeholder="e.g., 2 or -1" step="1">
+                            <input type="number" id="insp_comb_frames_change" placeholder="e.g., 2 or -1" step="1" min = -10 max = 10 oninput="sanitizeSignedInt(this) ">
                             <div class="field-hint-sm">Positive = added, negative = removed</div>
                         </div>
                         <div class="form-group">
                             <label><i class="fas fa-square"></i> Wax Foundation (+/-)</label>
-                            <input type="number" id="insp_wax_foundation_change" placeholder="e.g., 3 or -2" step="1">
+                            <input type="number" id="insp_wax_foundation_change" placeholder="e.g., 3 or -2" step="1" min = -10 max = 10 oninput="sanitizeSignedInt(this)">
                             <div class="field-hint-sm">Positive = added, negative = removed</div>
                         </div>
                     </div>

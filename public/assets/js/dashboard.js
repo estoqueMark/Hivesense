@@ -481,32 +481,35 @@ function calNextMonth() {
 async function selectCalDay(ds) {
     calSelectedDate = ds;
     buildCalGrid();
-    
+
     $('#notePaneEmpty').hide();
     $('#noteEditor').show();
-    
+
     const label = new Date(ds + 'T00:00:00').toLocaleDateString(undefined, {
         weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
     });
     $('#noteDateHeader').text(label);
-    
-    const today = new Date().toISOString().split('T')[0];
+
+    // FIX: build "today" from local date parts, not toISOString() (which is UTC
+    // and lags behind Asia/Manila local time between 12:00–07:59 AM).
+    const now = new Date();
+    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
     const isFuture = ds > today;
-    
+
     try {
         const hiveId = $('#insp_hive_id').val();
         let url = BASE_URL + `/api/note_by_date?date=${ds}`;
         if (hiveId) url += `&sensor_id=${hiveId}`;
-        
+
         const response = await fetch(url);
         const result = await response.json();
-        
+
         clearInspectionForm();
-        
+
         if (result.success && result.data && result.data.note_id) {
             populateInspectionForm(result.data);
         }
-        
+
         setFormReadOnly(isFuture);
     } catch(e) {
         clearInspectionForm();
@@ -599,6 +602,50 @@ function initRatingBars() {
             $(this).append(pip);
         }
     });
+}
+
+function sanitizeSignedInt(el) {
+    let v = el.value;
+
+    // Allow empty input
+    if (v === '') {
+        return;
+    }
+
+    // Allow "-" temporarily while typing a negative number
+    if (v === '-') {
+        return;
+    }
+
+    // Keep only one leading minus and digits
+    v = v.replace(/[^\d-]/g, '');
+
+    // Make sure "-" can only be at the beginning
+    v = v.replace(/(?!^)-/g, '');
+
+    let num = parseInt(v, 10);
+
+    if (isNaN(num)) {
+        el.value = '';
+        return;
+    }
+
+    // Limit from -10 to 10
+    if (num > 10) num = 10;
+    if (num < -10) num = -10;
+
+    el.value = String(num);
+}
+
+function sanitizeSignedIntColony(el) {
+    let v = el.value;
+    const negative = v.trim().startsWith('-');
+    let digits = v.replace(/[^0-9]/g, '');
+    el.value = (negative && digits !== '') ? '-' + digits : digits;
+}
+// insp_num_colonies is a count — digits only, no sign at all
+function sanitizeUnsignedInt(el) {
+    el.value = el.value.replace(/[^0-9]/g, '');
 }
 
 async function saveCurrentNote() {
@@ -1502,7 +1549,13 @@ function renderCompareTable() {
         const isDiff = compareNoteA && compareNoteB && displayA !== displayB;
         const clsA = displayA === '—' ? 'empty-val' : (isDiff ? 'diff' : '');
         const clsB = displayB === '—' ? 'empty-val' : (isDiff ? 'diff' : '');
-        html += `<tr><td class="field-label">${f.label}</td><td class="${clsA}">${displayA}</td><td class="${clsB}">${displayB}</td></tr>`;
+        const labelA = compareNoteA ? formatDate(compareNoteA.note_date) : 'Date A';
+        const labelB = compareNoteB ? formatDate(compareNoteB.note_date) : 'Date B';
+        html += `<tr>
+            <td class="field-label" data-label="Field">${f.label}</td>
+            <td class="${clsA}" data-label="${labelA}">${displayA}</td>
+            <td class="${clsB}" data-label="${labelB}">${displayB}</td>
+        </tr>`;
     });
     $('#compareTableBody').html(html);
 }

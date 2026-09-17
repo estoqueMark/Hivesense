@@ -103,16 +103,20 @@ class Dashboard extends Hive_Controller {
 
     public function createHive() {
         try {
-            $this->requireAdmin();            
+            $this->requireAdmin();
             $data = $this->getJsonBody();
             $hiveName = trim($data['hive_name'] ?? '');
             $location = trim($data['location'] ?? '');
-            
+
             if (empty($hiveName)) {
                 $this->jsonResponse(['success' => false, 'message' => 'Hive name is required']);
                 return;
             }
-            
+            if ($this->hiveModel->hiveNameExists($hiveName)) {
+                $this->jsonResponse(['success' => false, 'message' => 'A hive with that name already exists.']);
+                return;
+            }
+
             $id = $this->hiveModel->createHive($hiveName, $location);
             $this->jsonResponse(['success' => true, 'sensor_id' => $id]);
         } catch (Exception $e) {
@@ -122,17 +126,21 @@ class Dashboard extends Hive_Controller {
 
     public function updateHive() {
         try {
-            $this->requireAdmin();            
+            $this->requireAdmin();
             $data = $this->getJsonBody();
             $id = (int)($data['sensor_id'] ?? 0);
             $hiveName = trim($data['hive_name'] ?? '');
             $location = trim($data['location'] ?? '');
-            
+
             if (!$id || empty($hiveName)) {
                 $this->jsonResponse(['success' => false, 'message' => 'Invalid data']);
                 return;
             }
-            
+            if ($this->hiveModel->hiveNameExists($hiveName, $id)) {
+                $this->jsonResponse(['success' => false, 'message' => 'A hive with that name already exists.']);
+                return;
+            }
+
             $result = $this->hiveModel->updateHive($id, $hiveName, $location);
             $this->jsonResponse(['success' => $result]);
         } catch (Exception $e) {

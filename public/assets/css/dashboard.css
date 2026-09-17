@@ -398,7 +398,42 @@
 .compare-table td.diff { background: rgba(245,197,24,0.16); font-weight: 600; }
 .compare-table td.empty-val { color: var(--text-dim); font-style: italic; }
 
-
+@media (max-width: 700px) {
+    .compare-table { min-width: 0; }
+    .compare-table thead { display: none; }
+    .compare-table, .compare-table tbody, .compare-table tr, .compare-table td {
+        display: block; width: 100%;
+    }
+    .compare-table tr {
+        margin-bottom: 12px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    .compare-table td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        padding: 8px 14px;
+        border-bottom: 1px solid rgba(45,122,58,0.08);
+        width: auto !important;
+    }
+    .compare-table td:last-child { border-bottom: none; }
+    .compare-table td.field-label {
+        background: var(--green-pale);
+        font-weight: 700;
+    }
+    .compare-table td::before {
+        content: attr(data-label);
+        font-weight: 700;
+        color: var(--text-dim);
+        font-size: 0.68rem;
+        text-transform: uppercase;
+        flex-shrink: 0;
+    }
+    .compare-table td.field-label::before { content: ''; }
+}
 /* ── Food Store Section ────────────────────────── */
 .food-section { margin-bottom: 28px; }
 .food-section-label {

@@ -66,6 +66,30 @@ class CalendarNote_Model extends Base_Model {
         return $stmt->get_result()->fetch_assoc() ?: null;
     }
 
+    public function getNoteByDateAndHive(string $date, ?int $sensorId = null): ?array {
+    if ($sensorId) {
+        $stmt = $this->connection->prepare(
+            'SELECT n.*, s.hive_name
+             FROM hs_calendar_notes n
+             LEFT JOIN hs_sensors s ON s.sensor_id = n.sensor_id
+             WHERE n.note_date = ? AND n.sensor_id = ?
+             LIMIT 1'
+        );
+        $stmt->bind_param("si", $date, $sensorId);
+    } else {
+        $stmt = $this->connection->prepare(
+            'SELECT n.*, s.hive_name
+             FROM hs_calendar_notes n
+             LEFT JOIN hs_sensors s ON s.sensor_id = n.sensor_id
+             WHERE n.note_date = ?
+             LIMIT 1'
+        );
+        $stmt->bind_param("s", $date);
+    }
+    $stmt->execute();
+    return $stmt->get_result()->fetch_assoc() ?: null;
+}
+
     public function createNote(array $data): int {
         $note_date              = $data['note_date']              ?? null;
         $sensor_id               = ($data['sensor_id']               !== null && $data['sensor_id']               !== '') ? (string)(int)$data['sensor_id']               : null;

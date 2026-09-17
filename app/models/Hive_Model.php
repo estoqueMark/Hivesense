@@ -47,6 +47,15 @@ class Hive_Model extends Base_Model {
         $stmt->execute();
         return $this->connection->insert_id;
     }
+    
+    public function hiveNameExists(string $hiveName, int $excludeId = 0): bool {
+    $stmt = $this->connection->prepare(
+        'SELECT 1 FROM hs_sensors WHERE hive_name = ? AND sensor_id != ? LIMIT 1'
+    );
+    $stmt->bind_param("si", $hiveName, $excludeId);
+    $stmt->execute();
+    return (bool)$stmt->get_result()->fetch_assoc();
+}
 
     public function updateHive(int $id, string $hiveName, string $location): bool {
         $stmt = $this->connection->prepare(
