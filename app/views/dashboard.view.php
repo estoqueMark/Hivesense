@@ -473,7 +473,7 @@
                     
 <div class="form-group">
                         <label><i class="fas fa-layer-group"></i> Colony ID </label>
-                        <input type="number" id="insp_num_colonies" placeholder="Enter number of colony" min="0" step="1" oninput="sanitizeUnsignedIntColony(this)">
+                        <input type="number" id="insp_num_colonies" placeholder="Enter number of colony" min="0" step="1" oninput="sanitizeSignedIntColony(this)">
                     </div>
 
                     <div class="form-grid-2">
