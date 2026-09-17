@@ -1,0 +1,133 @@
+
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: #F4FAF5;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #1A3320;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Honeycomb background */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                radial-gradient(ellipse 60% 50% at 50% 50%, rgba(245,197,24,0.12) 0%, transparent 70%),
+                url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='104'%3E%3Cpath d='M30 2L58 18v36L30 70 2 54V18z' fill='none' stroke='rgba(45,122,58,0.08)' stroke-width='1'/%3E%3Cpath d='M30 70l28 16v36L30 138 2 122V86z' fill='none' stroke='rgba(45,122,58,0.08)' stroke-width='1'/%3E%3C/svg%3E");
+            pointer-events: none;
+        }
+
+        /* Decorative green arc top */
+        body::after {
+            content: '';
+            position: fixed;
+            top: -160px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 700px;
+            height: 320px;
+            background: radial-gradient(ellipse, rgba(45,122,58,0.15) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .error-container {
+            text-align: center;
+            padding: 48px 40px;
+            background: #FFFFFF;
+            border: 1px solid rgba(45,122,58,0.15);
+            border-radius: 24px;
+            box-shadow: 0 8px 48px rgba(45,122,58,0.12);
+            position: relative;
+            z-index: 1;
+            max-width: 480px;
+            width: 90%;
+        }
+
+        /* Yellow accent bar at top of card */
+        .error-container::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #2D7A3A, #F5C518, #2D7A3A);
+            border-radius: 24px 24px 0 0;
+        }
+
+        .error-icon {
+            font-size: 72px;
+            margin-bottom: 8px;
+            display: block;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50%       { transform: translateY(-10px); }
+        }
+
+        .error-code {
+            font-family: 'DM Serif Display', serif;
+            font-size: 96px;
+            font-weight: 400;
+            color: #2D7A3A;
+            line-height: 1;
+            margin-bottom: 8px;
+            letter-spacing: -2px;
+        }
+
+        .error-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1A3320;
+            margin-bottom: 10px;
+        }
+
+        .error-message {
+            font-size: 0.88rem;
+            color: #4A7055;
+            margin-bottom: 32px;
+            line-height: 1.6;
+        }
+
+        .home-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(135deg, #2D7A3A, #1E5728);
+            color: #FFFFFF;
+            padding: 12px 28px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 16px rgba(45,122,58,0.25);
+        }
+
+        .home-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(45,122,58,0.35);
+        }
+
+        /* Floating bees */
+        .bee {
+            position: fixed;
+            font-size: 22px;
+            animation: fly 9s linear infinite;
+            pointer-events: none;
+            opacity: 0;
+        }
+
+        @keyframes fly {
+            0%   { transform: translate(0, 0) rotate(-10deg); opacity: 0; }
+            8%   { opacity: 1; }
+            92%  { opacity: 1; }
+            100% { transform: translate(var(--tx), var(--ty)) rotate(15deg); opacity: 0; }
+        }
