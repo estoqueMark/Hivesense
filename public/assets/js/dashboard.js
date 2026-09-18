@@ -1,5 +1,16 @@
 // Configuration
 
+// Auto-attach CSRF token to every same-origin POST request
+(function() {
+    const originalFetch = window.fetch;
+    window.fetch = function(url, options = {}) {
+        if (options.method && options.method.toUpperCase() === 'POST') {
+            options.headers = Object.assign({}, options.headers, { 'X-CSRF-Token': CSRF_TOKEN });
+        }
+        return originalFetch(url, options);
+    };
+})();
+
 let currentDays = 30;
 let chart = null;
 let refreshTimer = null;
@@ -732,6 +743,10 @@ function closeHiveManager() {
     resetHiveForm();
 }
 
+// FIX: Store hive data in a map keyed by id so buttons read from memory
+//      instead of fragile inline onclick strings (same fix as announcements)
+const hiveDataMap = {};
+
 async function loadHiveManagerList() {
     const container = $('#hiveManagerList');
     container.html('<div class="loading">Loading...</div>');
@@ -748,12 +763,13 @@ async function loadHiveManagerList() {
             
             let html = '';
             result.data.forEach(h => {
+                hiveDataMap[h.sensor_id] = h;
                 const inactive = parseInt(h.is_active) === 0;
                 const actions = inactive
                     ? `<button class="hmi-btn restore" onclick="restoreHive(${h.sensor_id})" title="Restore"><i class="fas fa-undo"></i></button>
-                       <button class="hmi-btn delete" onclick="permanentDeleteHive(${h.sensor_id}, '${escapeHtml(h.hive_name)}')" title="Permanently Delete"><i class="fas fa-trash"></i></button>`
-                    : `<button class="hmi-btn edit" onclick="startEditHive(${h.sensor_id}, '${escapeHtml(h.hive_name)}', '${escapeHtml(h.location || '')}')" title="Edit"><i class="fas fa-pen"></i></button>
-                       <button class="hmi-btn delete" onclick="confirmDeleteHive(${h.sensor_id}, '${escapeHtml(h.hive_name)}')" title="Deactivate"><i class="fas fa-trash"></i></button>`;
+                       <button class="hmi-btn delete" data-id="${h.sensor_id}" onclick="permanentDeleteHiveFromBtn(this)" title="Permanently Delete"><i class="fas fa-trash"></i></button>`
+                    : `<button class="hmi-btn edit" data-id="${h.sensor_id}" onclick="startEditHiveFromBtn(this)" title="Edit"><i class="fas fa-pen"></i></button>
+                       <button class="hmi-btn delete" data-id="${h.sensor_id}" onclick="confirmDeleteHiveFromBtn(this)" title="Deactivate"><i class="fas fa-trash"></i></button>`;
                 
                 html += `<div class="hive-manager-item ${inactive ? 'inactive' : ''}">
                             <div class="hmi-info">
@@ -768,6 +784,19 @@ async function loadHiveManagerList() {
     } catch(e) {
         container.html(`<div class="loading">Error: ${e.message}</div>`);
     }
+}
+
+function startEditHiveFromBtn(btn) {
+    const h = hiveDataMap[$(btn).data('id')];
+    if (h) startEditHive(h.sensor_id, h.hive_name, h.location || '');
+}
+function confirmDeleteHiveFromBtn(btn) {
+    const h = hiveDataMap[$(btn).data('id')];
+    if (h) confirmDeleteHive(h.sensor_id, h.hive_name);
+}
+function permanentDeleteHiveFromBtn(btn) {
+    const h = hiveDataMap[$(btn).data('id')];
+    if (h) permanentDeleteHive(h.sensor_id, h.hive_name);
 }
 
 function startEditHive(id, name, location) {

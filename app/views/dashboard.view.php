@@ -830,6 +830,7 @@
 
 <script>
     const BASE_URL = '<?= ROOT ?>';
+    const CSRF_TOKEN = <?= json_encode($_SESSION['csrf_token'] ?? '') ?>;
     <?php if (!empty($roleNotice)): ?>
     window.addEventListener('DOMContentLoaded', function() {
         showToast(<?= json_encode($roleNotice) ?>, 'info');

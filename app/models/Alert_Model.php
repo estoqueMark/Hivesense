@@ -10,6 +10,8 @@ class Alert_Model extends Base_Model {
     const HUM_VERY_HUMID = 85;
     const CO2_HIGH        = 1500;
     const CO2_DANGER      = 3000;
+    const FOOD_LOW        = 25;
+    const FOOD_CRITICAL   = 0;
 
     public function __construct() {
         parent::__construct();
@@ -45,9 +47,19 @@ class Alert_Model extends Base_Model {
             }
         }
 
+        if ($foodLevel !== null) {
+            if ($foodLevel <= self::FOOD_CRITICAL) {
+                $triggered[] = ['type' => 'food', 'severity' => 'critical', 'value' => $foodLevel,
+                    'message' => "Food store is empty ({$foodLevel}%) — feed the colony now."];
+            } elseif ($foodLevel <= self::FOOD_LOW) {
+                $triggered[] = ['type' => 'food', 'severity' => 'warning', 'value' => $foodLevel,
+                    'message' => "Food store is low ({$foodLevel}%) — plan feeding soon."];
+            }
+        }
+
         $breachedTypes = array_column($triggered, 'type');
 
-        foreach (['temperature', 'humidity', 'co2'] as $type) {
+        foreach (['temperature', 'humidity', 'co2', 'food'] as $type) {
             if (!in_array($type, $breachedTypes)) {
                 $this->resolveActiveAlert($sensorId, $type);
             }

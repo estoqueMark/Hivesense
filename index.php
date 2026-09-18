@@ -138,6 +138,10 @@ elseif ($seg0 === 'api' && $seg1 !== '') {
     $dash = new Dashboard();
     $auth = new Auth_Controller();
 
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $dash->verifyCsrfHeader();
+    }
+
     switch ($seg1) {
         case 'readings':              $dash->getReadings();          break;
         // Sensor data

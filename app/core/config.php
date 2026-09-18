@@ -20,7 +20,8 @@ if($_SERVER["SERVER_NAME"] == "localhost"){
 // and with MySQL's NOW()/CURDATE() (set per-connection in Base_Model).
 date_default_timezone_set('Asia/Manila');
 
-// Error reporting — disable in production
+// Error reporting — log, don't print (printed errors break JSON responses)
 error_reporting(E_ALL);
-ini_set('display_errors', 1);
+ini_set('display_errors', 0);
+ini_set('log_errors', 1);
 ?>

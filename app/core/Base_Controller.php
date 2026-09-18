@@ -87,5 +87,12 @@ public function redirect($path) {
         return strpos($_SERVER['REQUEST_URI'] ?? '', '/api/') !== false
             || ($_SERVER['CONTENT_TYPE'] ?? '') === 'application/json';
     }
+
+    public function verifyCsrfHeader(): void {
+        $token = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
+        if (!hash_equals($_SESSION['csrf_token'] ?? '', $token)) {
+            $this->jsonResponse(['success' => false, 'message' => 'Invalid or missing CSRF token.']);
+        }
+    }
 }
 ?>
