@@ -88,6 +88,11 @@
             <i class="fas fa-user-plus"></i> Create an Account
         </a>
 
+        <p style="text-align:center;font-size:0.76rem;color:var(--text-dim);margin-top:18px;">
+            By signing in, you agree to HiveSense's
+            <a href="<?= ROOT ?>/terms" style="color:var(--green);font-weight:700;text-decoration:none;">Terms &amp; Conditions</a>.
+        </p>
+
     </div>
 </div>
 

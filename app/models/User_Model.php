@@ -75,7 +75,8 @@ class User_Model extends Base_Model {
              WHERE user_id = ?'
         );
         $stmt->bind_param("ssssi", $username, $email, $fullName, $role, $id);
-        return $stmt->execute();
+        $stmt->execute();
+        return $stmt->affected_rows > 0;
     }
 
     public function updatePassword(int $id, string $newPassword): bool {
@@ -84,7 +85,8 @@ class User_Model extends Base_Model {
             'UPDATE hs_users SET password_hash = ? WHERE user_id = ?'
         );
         $stmt->bind_param("si", $hash, $id);
-        return $stmt->execute();
+        $stmt->execute();
+        return $stmt->affected_rows > 0;
     }
 
     public function toggleActive(int $id): bool {
@@ -92,13 +94,15 @@ class User_Model extends Base_Model {
             'UPDATE hs_users SET is_active = IF(is_active=1,0,1) WHERE user_id = ?'
         );
         $stmt->bind_param("i", $id);
-        return $stmt->execute();
+        $stmt->execute();
+        return $stmt->affected_rows > 0;
     }
 
     public function deleteUser(int $id): bool {
         $stmt = $this->connection->prepare('DELETE FROM hs_users WHERE user_id = ?');
         $stmt->bind_param("i", $id);
-        return $stmt->execute();
+        $stmt->execute();
+        return $stmt->affected_rows > 0;
     }
 
     public function usernameExists(string $username, int $excludeId = 0): bool {

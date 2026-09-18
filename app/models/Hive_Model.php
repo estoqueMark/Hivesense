@@ -64,7 +64,8 @@ class Hive_Model extends Base_Model {
              WHERE sensor_id = ?'
         );
         $stmt->bind_param("ssi", $hiveName, $location, $id);
-        return $stmt->execute();
+        $stmt->execute();
+        return $stmt->affected_rows > 0;
     }
 
     public function deleteHive(int $id): bool {
@@ -72,7 +73,8 @@ class Hive_Model extends Base_Model {
             'UPDATE hs_sensors SET is_active = 0 WHERE sensor_id = ?'
         );
         $stmt->bind_param("i", $id);
-        return $stmt->execute();
+        $stmt->execute();
+        return $stmt->affected_rows > 0;
     }
 
     public function restoreHive(int $id): bool {
@@ -80,13 +82,15 @@ class Hive_Model extends Base_Model {
             'UPDATE hs_sensors SET is_active = 1 WHERE sensor_id = ?'
         );
         $stmt->bind_param("i", $id);
-        return $stmt->execute();
+        $stmt->execute();
+        return $stmt->affected_rows > 0;
     }
 
     public function permanentDeleteHive(int $id): bool {
         $stmt = $this->connection->prepare('DELETE FROM hs_sensors WHERE sensor_id = ?');
         $stmt->bind_param("i", $id);
-        return $stmt->execute();
+        $stmt->execute();
+        return $stmt->affected_rows > 0;
     }
 }
 ?>

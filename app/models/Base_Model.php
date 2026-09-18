@@ -5,9 +5,9 @@ class Base_Model {
     public $connection;
 
     public function __construct() {
-        $this->connection = new mysqli(DBSERVER, DBUSER, DBPASS, DBNAME);
-        if ($this->connection->connect_error) {
-            die("Connection failed: " . $this->connection->connect_error);
+        $this->connection = mysqli_init();
+        if (!$this->connection->real_connect(DBSERVER, DBUSER, DBPASS, DBNAME, null, null, MYSQLI_CLIENT_FOUND_ROWS)) {
+            die("Connection failed: " . mysqli_connect_error());
         }
         $this->connection->set_charset("utf8mb4");
 

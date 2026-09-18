@@ -9,7 +9,6 @@ class Dashboard extends Hive_Controller {
 
     public function index() {
         $roleNotice = $this->syncSessionRole();
-        error_log('DEBUG roleNotice: ' . var_export($roleNotice, true) . ' | session role: ' . ($_SESSION['role'] ?? 'none'));
         $hives = $this->hiveModel->getActiveHives();
         $this->view('dashboard', ['hives' => $hives, 'roleNotice' => $roleNotice]);
     }

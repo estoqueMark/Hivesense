@@ -97,6 +97,11 @@ elseif ($seg0 === 'logout') {
     (new Auth_Controller())->logout();
 }
 
+// ── TERMS & CONDITIONS (public, no auth) ────────────────────
+elseif ($seg0 === 'terms') {
+    (new Base_Controller())->view('terms');
+}
+
 // ── REGISTER ─────────────────────────────────────────────────
 elseif ($seg0 === 'register') {
     // Already logged in? No need to register
@@ -177,7 +182,6 @@ elseif ($seg0 === 'api' && $seg1 !== '') {
         case 'announcement_create':       $dash->createAnnouncement();   break;
         case 'announcement_update':       $dash->updateAnnouncement();   break;
         case 'announcement_delete':       $dash->deleteAnnouncement();   break;
-        case 'announcement_toggle':       $dash->toggleAnnouncement();   break;
         case 'announcement_toggle':       $dash->toggleAnnouncement();   break;
         case 'alerts':                    $dash->getAlerts();            break;
         case 'alert_history':             $dash->getAlertHistory();      break;

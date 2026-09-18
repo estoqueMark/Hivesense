@@ -1,0 +1,87 @@
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+    --green:       #2D7A3A;
+    --green-deep:  #1E5728;
+    --green-faint: #F4FAF5;
+    --yellow:      #F5C518;
+    --white:       #FFFFFF;
+    --text:        #1A3320;
+    --text-muted:  #4A7055;
+    --text-dim:    #85A88C;
+    --border:      rgba(45,122,58,0.18);
+}
+
+body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--green-faint);
+    color: var(--text);
+}
+
+.terms-page {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 56px 24px 80px;
+}
+
+.back-home {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 0.82rem; color: var(--text-dim);
+    text-decoration: none; transition: color 0.2s;
+    margin-bottom: 28px;
+}
+.back-home:hover { color: var(--green); }
+
+.terms-eyebrow {
+    font-size: 0.72rem; font-weight: 800;
+    text-transform: uppercase; letter-spacing: 0.14em;
+    color: var(--green); margin-bottom: 8px;
+}
+.terms-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.2rem; font-weight: 700;
+    color: var(--text); margin-bottom: 6px;
+}
+.terms-updated {
+    font-size: 0.82rem; color: var(--text-dim);
+    margin-bottom: 32px;
+}
+
+.terms-body {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 40px;
+}
+
+.terms-body section { margin-bottom: 28px; }
+.terms-body section:last-child { margin-bottom: 0; }
+
+.terms-body h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.15rem; font-weight: 700;
+    color: var(--green-deep);
+    margin-bottom: 10px;
+}
+
+.terms-body p {
+    font-size: 0.92rem; line-height: 1.7;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+}
+.terms-body p:last-child { margin-bottom: 0; }
+
+.terms-body ul {
+    margin: 10px 0 10px 22px;
+}
+.terms-body ul li {
+    font-size: 0.92rem; line-height: 1.7;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+}
+.terms-body strong { color: var(--text); }
+
+@media (max-width: 640px) {
+    .terms-page { padding: 40px 16px 60px; }
+    .terms-body { padding: 24px; }
+    .terms-title { font-size: 1.7rem; }
+}

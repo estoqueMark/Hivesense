@@ -97,6 +97,19 @@ class Ingest extends Base_Controller {
             exit();
         }
 
+        // Verify sensor_id exists (if provided) — avoids orphaned readings for a
+        // typo'd or deleted hive
+        if ($sensorId !== null) {
+            $stmt = $connection->prepare('SELECT sensor_id FROM hs_sensors WHERE sensor_id = ? LIMIT 1');
+            $stmt->bind_param("i", $sensorId);
+            $stmt->execute();
+            if (!$stmt->get_result()->fetch_assoc()) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'message' => "Unknown sensor_id: {$sensorId}"]);
+                exit();
+            }
+        }
+
         // Insert reading
         $stmt = $connection->prepare(
             'INSERT INTO sensor_readings (sensor_id, temperature, humidity, co2, food_level, timestamp)
