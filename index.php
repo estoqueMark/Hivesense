@@ -40,9 +40,37 @@ function isLoggedIn(): bool {
 
 function guardLogin(): void {
     if (!isLoggedIn()) {
-        header('Location: ' . ROOT . '/login');
+        denyAccess();
+    }
+    if (!sessionUserStillActive()) {
+        session_unset();
+        session_destroy();
+        denyAccess();
+    }
+}
+
+function sessionUserStillActive(): bool {
+    $userId = (int)($_SESSION['user_id'] ?? 0);
+    if (!$userId) return false;
+
+    require_once MODELS_PATH . '/Base_Model.php';
+    $db = new Base_Model();
+    $stmt = $db->connection->prepare('SELECT is_active FROM hs_users WHERE user_id = ? LIMIT 1');
+    $stmt->bind_param("i", $userId);
+    $stmt->execute();
+    $row = $stmt->get_result()->fetch_assoc();
+    return $row && (int)$row['is_active'] === 1;
+}
+
+function denyAccess(): void {
+    if (strpos($_SERVER['REQUEST_URI'] ?? '', '/api/') !== false) {
+        header('Content-Type: application/json');
+        http_response_code(401);
+        echo json_encode(['success' => false, 'message' => 'Your session is no longer valid. Please sign in again.']);
         exit();
     }
+    header('Location: ' . ROOT . '/login');
+    exit();
 }
 
 function verifyCsrf(): void {

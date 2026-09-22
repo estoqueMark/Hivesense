@@ -20,8 +20,10 @@ if($_SERVER["SERVER_NAME"] == "localhost"){
 // and with MySQL's NOW()/CURDATE() (set per-connection in Base_Model).
 date_default_timezone_set('Asia/Manila');
 
-// Error reporting — log, don't print (printed errors break JSON responses)
+// Error reporting — log everywhere; only print to the browser on localhost.
+// On production, printing errors both leaks internals and breaks JSON
+// responses from the API endpoints, so it stays off there unconditionally.
 error_reporting(E_ALL);
-ini_set('display_errors', 0);
 ini_set('log_errors', 1);
+ini_set('display_errors', ($_SERVER["SERVER_NAME"] == "localhost") ? 1 : 0);
 ?>

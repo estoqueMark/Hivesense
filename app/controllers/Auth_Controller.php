@@ -41,13 +41,16 @@ class Auth_Controller extends Base_Controller {
             $this->redirect('/login');
         }
 
-        // Brute-force throttle
-        $attempts    = $_SESSION['login_attempts'] ?? 0;
-        $lastAttempt = $_SESSION['last_attempt_time'] ?? 0;
-        if (time() - $lastAttempt > 900) $attempts = 0;
+        // Brute-force throttle — tracked per-account in the DB, not per-session,
+        // so clearing cookies / using a private window cannot reset the counter.
+        $lockout     = $this->userModel->getLockoutStatus($login);
+        $attempts    = (int) $lockout['failed_login_attempts'];
+        $lastFailed  = $lockout['last_failed_login'] ? strtotime($lockout['last_failed_login']) : 0;
+
+        if (time() - $lastFailed > 900) $attempts = 0;
 
         if ($attempts >= 5) {
-            $wait = 900 - (time() - $lastAttempt);
+            $wait = 900 - (time() - $lastFailed);
             $_SESSION['login_error'] = "Too many failed attempts. Please wait " . ceil($wait / 60) . " minute(s).";
             $this->redirect('/login');
         }
@@ -55,14 +58,14 @@ class Auth_Controller extends Base_Controller {
         $user = $this->userModel->attemptLogin($login, $password);
 
         if (!$user) {
-            $_SESSION['login_attempts']    = $attempts + 1;
-            $_SESSION['last_attempt_time'] = time();
-            $_SESSION['login_error']       = 'Invalid username or password.';
+            $this->userModel->recordFailedLogin($login);
+            $_SESSION['login_error'] = 'Invalid username or password.';
             $this->redirect('/login');
         }
 
+        $this->userModel->resetFailedLogins((int) $user['user_id']);
+
         session_regenerate_id(true);
-        unset($_SESSION['login_attempts'], $_SESSION['last_attempt_time']);
 
         $_SESSION['user_id']   = $user['user_id'];
         $_SESSION['username']  = $user['username'];

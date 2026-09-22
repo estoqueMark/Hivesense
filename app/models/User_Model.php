@@ -35,7 +35,34 @@ class User_Model extends Base_Model {
         $stmt->bind_param("i", $userId);
         $stmt->execute();
     }
+    public function getLockoutStatus(string $login): array {
+        $stmt = $this->connection->prepare(
+            'SELECT failed_login_attempts, last_failed_login FROM hs_users
+             WHERE (username = ? OR email = ?) LIMIT 1'
+        );
+        $stmt->bind_param("ss", $login, $login);
+        $stmt->execute();
+        $row = $stmt->get_result()->fetch_assoc();
+        return $row ?: ['failed_login_attempts' => 0, 'last_failed_login' => null];
+    }
 
+    public function recordFailedLogin(string $login): void {
+        $stmt = $this->connection->prepare(
+            'UPDATE hs_users
+             SET failed_login_attempts = failed_login_attempts + 1, last_failed_login = NOW()
+             WHERE (username = ? OR email = ?)'
+        );
+        $stmt->bind_param("ss", $login, $login);
+        $stmt->execute();
+    }
+
+    public function resetFailedLogins(int $userId): void {
+        $stmt = $this->connection->prepare(
+            'UPDATE hs_users SET failed_login_attempts = 0, last_failed_login = NULL WHERE user_id = ?'
+        );
+        $stmt->bind_param("i", $userId);
+        $stmt->execute();
+    }
     // ── User Management ───────────────────────────────────────
 
     public function getAllUsers(): array {

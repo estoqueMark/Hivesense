@@ -23,8 +23,8 @@ class Ingest extends Base_Controller {
             echo json_encode(['success' => false, 'message' => 'Invalid JSON.']);
             exit();
         }
-        $apiKey     = trim($body['api_key']  ?? '');
-        $sensorId    = isset($body['sensor_id']) ? (int)$body['sensor_id'] : null;
+        $apiKey      = trim($body['api_key']  ?? '');
+        $sensorIdRaw = $body['sensor_id']    ?? null;
         $temperature = $body['temperature']  ?? null;
         $humidity    = $body['humidity']     ?? null;
         $co2         = $body['co2']          ?? null; 
@@ -36,11 +36,30 @@ class Ingest extends Base_Controller {
             exit();
         }
 
+        if (!isset($body['sensor_id']) || !is_numeric($body['sensor_id']) || (int)$body['sensor_id'] <= 0) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'A valid sensor_id is required.']);
+            exit();
+        }
+
         if ($temperature === null || $humidity === null) {
             http_response_code(400);
             echo json_encode(['success' => false, 'message' => 'temperature and humidity are required.']);
             exit();
         }
+
+        if (!is_numeric($temperature) || !is_numeric($humidity)) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'temperature and humidity must be numeric.']);
+            exit();
+        }
+
+        if ($sensorIdRaw !== null && !is_numeric($sensorIdRaw)) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'sensor_id must be numeric.']);
+            exit();
+        }
+        $sensorId = $sensorIdRaw !== null ? (int) $sensorIdRaw : null;
 
         $temperature = (float) $temperature;
         $humidity    = (float) $humidity;
@@ -60,6 +79,11 @@ class Ingest extends Base_Controller {
         // CO2 is optional — validate only when provided
         $co2Float = null;
         if ($co2 !== null) {
+            if (!is_numeric($co2)) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'message' => 'co2 must be numeric.']);
+                exit();
+            }
             $co2Float = (float) $co2;
             // Typical indoor CO2 range: 300–10000 ppm
             if ($co2Float < 300 || $co2Float > 10000) {
@@ -72,6 +96,11 @@ class Ingest extends Base_Controller {
         // Food level is optional — validate only when provided
         $foodFloat = null;
         if ($foodLevel !== null) {
+            if (!is_numeric($foodLevel)) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'message' => 'food_level must be numeric.']);
+                exit();
+            }
             $foodFloat = (float) $foodLevel;
             if ($foodFloat < 0 || $foodFloat > 100) {
                 http_response_code(400);
@@ -112,7 +141,7 @@ class Ingest extends Base_Controller {
 
         // Insert reading
         $stmt = $connection->prepare(
-            'INSERT INTO sensor_readings (sensor_id, temperature, humidity, co2, food_level, timestamp)
+            'INSERT INTO hs_readings (sensor_id, temperature, humidity, co2, food_level, timestamp)
              VALUES (?, ?, ?, ?, ?, NOW())'
         );
         $stmt->bind_param("idddd", $sensorId, $temperature, $humidity, $co2Float, $foodFloat);

@@ -14,7 +14,7 @@ class Measurement_Model extends Base_Model {
                 'SELECT temperature, humidity, co2, food_level,
                         DATE(timestamp) AS measurement_date,
                         TIME(timestamp) AS measurement_time
-                 FROM sensor_readings
+                 FROM hs_readings
                  WHERE sensor_id = ?
                  ORDER BY timestamp DESC
                  LIMIT 1'
@@ -25,7 +25,7 @@ class Measurement_Model extends Base_Model {
                 'SELECT temperature, humidity, co2, food_level,
                         DATE(timestamp) AS measurement_date,
                         TIME(timestamp) AS measurement_time
-                 FROM sensor_readings
+                 FROM hs_readings
                  WHERE sensor_id IS NULL
                  ORDER BY timestamp DESC
                  LIMIT 1'
@@ -55,7 +55,7 @@ class Measurement_Model extends Base_Model {
                         DATE(timestamp)       AS measurement_date,
                         TIME(timestamp)       AS measurement_time,
                         timestamp
-                 FROM sensor_readings
+                 FROM hs_readings
                  WHERE timestamp >= DATE_SUB(NOW(), INTERVAL ? HOUR)
                    AND sensor_id = ?
                  ORDER BY timestamp ASC
@@ -71,7 +71,7 @@ class Measurement_Model extends Base_Model {
                         DATE(timestamp)       AS measurement_date,
                         TIME(timestamp)       AS measurement_time,
                         timestamp
-                 FROM sensor_readings
+                 FROM hs_readings
                  WHERE timestamp >= DATE_SUB(NOW(), INTERVAL ? HOUR)
                    AND sensor_id IS NULL
                  ORDER BY timestamp ASC
@@ -99,7 +99,7 @@ class Measurement_Model extends Base_Model {
                         ROUND(AVG(food_level), 1)  AS avg_food_level,
                         ROUND(MIN(food_level), 1)  AS min_food_level,
                         COUNT(*) AS reading_count
-                 FROM sensor_readings
+                 FROM hs_readings
                  WHERE sensor_id = ?
                  GROUP BY DATE(timestamp)
                  ORDER BY measurement_date DESC
@@ -119,7 +119,7 @@ class Measurement_Model extends Base_Model {
                         ROUND(AVG(food_level), 1)  AS avg_food_level,
                         ROUND(MIN(food_level), 1)  AS min_food_level,
                         COUNT(*) AS reading_count
-                 FROM sensor_readings
+                 FROM hs_readings
                  WHERE sensor_id IS NULL
                  GROUP BY DATE(timestamp)
                  ORDER BY measurement_date DESC
@@ -141,7 +141,7 @@ class Measurement_Model extends Base_Model {
                         ROUND(AVG(humidity), 1)    AS avg_humidity,
                         ROUND(AVG(co2), 1)         AS avg_co2,
                         ROUND(AVG(food_level), 1)  AS avg_food_level
-                 FROM sensor_readings
+                 FROM hs_readings
                  WHERE timestamp >= DATE_SUB(NOW(), INTERVAL ? DAY)
                    AND sensor_id = ?
                  GROUP BY DATE(timestamp)
@@ -155,7 +155,7 @@ class Measurement_Model extends Base_Model {
                         ROUND(AVG(humidity), 1)    AS avg_humidity,
                         ROUND(AVG(co2), 1)         AS avg_co2,
                         ROUND(AVG(food_level), 1)  AS avg_food_level
-                 FROM sensor_readings
+                 FROM hs_readings
                  WHERE timestamp >= DATE_SUB(NOW(), INTERVAL ? DAY)
                    AND sensor_id IS NULL
                  GROUP BY DATE(timestamp)
@@ -178,7 +178,7 @@ class Measurement_Model extends Base_Model {
                         ROUND(MAX(co2), 1)         AS max_co2,
                         ROUND(MIN(food_level), 1)  AS min_food_level,
                         ROUND(MAX(food_level), 1)  AS max_food_level
-                 FROM sensor_readings
+                 FROM hs_readings
                  WHERE DATE(timestamp) = CURDATE()
                    AND sensor_id = ?'
             );
@@ -191,7 +191,7 @@ class Measurement_Model extends Base_Model {
                         ROUND(MAX(co2), 1)         AS max_co2,
                         ROUND(MIN(food_level), 1)  AS min_food_level,
                         ROUND(MAX(food_level), 1)  AS max_food_level
-                 FROM sensor_readings
+                 FROM hs_readings
                  WHERE DATE(timestamp) = CURDATE()
                    AND sensor_id IS NULL'
             );
@@ -203,7 +203,7 @@ class Measurement_Model extends Base_Model {
 
     // Get total count — unchanged, global stat, not hive-specific
     public function getTotalCount(): int {
-        $result = $this->connection->query('SELECT COUNT(*) as count FROM sensor_readings');
+        $result = $this->connection->query('SELECT COUNT(*) as count FROM hs_readings');
         $row = $result->fetch_assoc();
         return $row['count'];
     }

@@ -1,5 +1,3 @@
-// Configuration
-
 // Auto-attach CSRF token to every same-origin POST request
 (function() {
     const originalFetch = window.fetch;
@@ -11,12 +9,40 @@
     };
 })();
 
+// Configuration
+
 let currentDays = 30;
 let chart = null;
 let refreshTimer = null;
 
 // FIX: Track currently selected hive sensor_id (null = show first/default)
 let currentSensorId = null;
+
+// ── Session guard ────────────────────────────────────────────────
+// guardLogin() on the server returns HTTP 401 for both "not logged in"
+// and "deactivated mid-session" (see index.php denyAccess()). Wrapping
+// fetch here means every existing API call in this file — apiUrl(),
+// direct BASE_URL calls, all of it — gets this check for free, without
+// having to touch each call site individually.
+let sessionExpiredHandled = false;
+const _nativeFetch = window.fetch;
+window.fetch = function(...args) {
+    return _nativeFetch.apply(this, args).then(function(response) {
+        if (response.status === 401 && !sessionExpiredHandled) {
+            sessionExpiredHandled = true;
+            handleSessionExpired();
+        }
+        return response;
+    });
+};
+
+function handleSessionExpired() {
+    if (refreshTimer) clearInterval(refreshTimer);
+    showToast('Your session has ended. Redirecting to sign in...', 'error');
+    setTimeout(function() {
+        window.location.href = BASE_URL + '/login';
+    }, 1200);
+}
 
 // Calendar Variables
 let calYear = new Date().getFullYear();
