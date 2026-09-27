@@ -405,7 +405,7 @@
                     <i class="fas fa-code-compare"></i> Compare Notes
                 </button>
                 <button class="btn-secondary" style="padding:8px 14px;" onclick="exportNotesCsv()">
-                    <i class="fas fa-file-csv"></i> Export CSV
+                    <i class="fas fa-file-csv"></i> Export Excel
                 </button>
                 <button class="modal-close" onclick="closeCalendar()">&times;</button>
             </div>
@@ -430,7 +430,6 @@
                     <div class="form-group">
                         <label><i class="fas fa-hive"></i> Select Hive</label>
                         <select id="insp_hive_id" class="table-filter" onchange="onHiveChange()">
-                            <option value="">All Hives</option>
                             <?php if (!empty($hives)): ?>
                                 <?php foreach ($hives as $hive): ?>
                                     <option value="<?php echo $hive['sensor_id']; ?>">

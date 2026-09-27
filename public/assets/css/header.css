@@ -7,6 +7,8 @@
             box-sizing: border-box;
         }
         
+        html { font-size: 112.5%; } /* 18px base, was 16px. Everything in rem scales up */
+
         :root {
             /* Green / White / Yellow — CRAC theme */
             --green:          #2D7A3A;

@@ -213,53 +213,106 @@ class Dashboard extends Hive_Controller {
         }
     }
     public function exportNotesCsv() {
-        $this->requireApiarist();
-        $sensorId = isset($_GET['sensor_id']) ? (int)$_GET['sensor_id'] : 0;
-        if (!$sensorId) {
-            http_response_code(400);
-            echo 'sensor_id is required.';
-            return;
-        }
-
-        $hive     = $this->hiveModel->getHiveById($sensorId);
-        $hiveName = $hive['hive_name'] ?? 'hive';
-        $safeName = preg_replace('/[^A-Za-z0-9_\-]+/', '_', $hiveName);
-        $filename = "hivesense_notes_{$safeName}_" . date('Ymd') . ".csv";
-
-        $notes = $this->calendarNoteModel->getNotesForExport($sensorId);
-
-        header('Content-Type: text/csv; charset=utf-8');
-        header('Content-Disposition: attachment; filename="' . $filename . '"');
-        header('Pragma: no-cache');
-        header('Expires: 0');
-
-        $out = fopen('php://output', 'w');
-        fwrite($out, "\xEF\xBB\xBF"); // UTF-8 BOM — makes Excel render special chars correctly
-
-        fputcsv($out, [
-            'Date', 'Hive Name', 'Colony ID', 'Queen Species/Breed', 'Queen Age',
-            'Comb Frames (+/-)', 'Wax Foundation (+/-)', 'Feeding',
-            'Colony Strength', 'Open Brood', 'Close Brood', 'Brood Pattern Type',
-            'Honey Store', 'Pollen Store', 'Temperament',
-            'Treatment Date', 'Chemical/Brand Used', 'Remarks/Notes'
-        ]);
-
-        foreach ($notes as $n) {
-            $feeding = ($n['feeding'] === '1' || $n['feeding'] === 1) ? 'Yes'
-                     : (($n['feeding'] === '0' || $n['feeding'] === 0) ? 'No' : '');
-            fputcsv($out, [
-                $n['note_date'], $n['hive_name'] ?? '', $n['num_colonies'] ?? '',
-                $n['queen_species'] ?? '', $n['queen_age'] ?? '',
-                $n['comb_frames_change'] ?? '', $n['wax_foundation_change'] ?? '', $feeding,
-                $n['colony_strength'] ?? '', $n['brood_pattern_open'] ?? '', $n['brood_pattern_close'] ?? '',
-                $n['brood_pattern_type'] ?? '', $n['honey_store'] ?? '', $n['pollen_store'] ?? '',
-                $n['temperament'] ?? '', $n['treatment_date'] ?? '', $n['chemical_brand'] ?? '', $n['remarks'] ?? '',
-            ]);
-        }
-
-        fclose($out);
-        exit();
+    $this->requireApiarist();
+    $sensorId = isset($_GET['sensor_id']) ? (int)$_GET['sensor_id'] : 0;
+    if (!$sensorId) {
+        http_response_code(400);
+        echo 'sensor_id is required.';
+        return;
     }
+
+    $hive     = $this->hiveModel->getHiveById($sensorId);
+    $hiveName = $hive['hive_name'] ?? 'hive';
+    $safeName = preg_replace('/[^A-Za-z0-9_\-]+/', '_', $hiveName);
+    $filename = "hivesense_notes_{$safeName}_" . date('Ymd') . ".xlsx";
+    $notes    = $this->calendarNoteModel->getNotesForExport($sensorId);
+
+    require_once BASE_PATH . '/vendor/autoload.php';
+    $ss    = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+    $sheet = $ss->getActiveSheet();
+    $sheet->setTitle('Inspections');
+
+    $sheet->fromArray([
+        'Date', 'Hive Name', 'Colony ID', 'Queen Species/Breed', 'Queen Age',
+        'Comb Frames (+/-)', 'Wax Foundation (+/-)', 'Feeding',
+        'Colony Strength', 'Open Brood', 'Close Brood', 'Brood Pattern Type',
+        'Honey Store', 'Pollen Store', 'Temperament',
+        'Treatment Date', 'Chemical/Brand Used', 'Remarks/Notes'
+    ], null, 'A1');
+    $sheet->getStyle('A1:R1')->applyFromArray([
+        'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+        'fill' => ['fillType' => 'solid', 'startColor' => ['rgb' => '2D7A3A']],
+        'alignment' => ['wrapText' => true, 'vertical' => 'center'],
+    ]);
+
+    $paint = function (string $cell, string $rgb) use ($sheet) {
+        $sheet->getStyle($cell)->getFill()->setFillType('solid')->getStartColor()->setRGB($rgb);
+    };
+    $ratingColor = function ($v) {
+        if ($v === null || $v === '') return null;
+        $v = (int)$v;
+        if ($v <= 3) return 'EF9A9A';   // poor / low
+        if ($v <= 7) return 'FFF59D';   // good / medium
+        return 'C8E6C9';                // excellent / high
+    };
+    $tempColors = [
+        'docile' => 'C8E6C9', 'calm' => 'C8E6C9',
+        'defensive' => 'FFCC80',
+        'aggressive' => 'EF9A9A', 'very_aggressive' => 'EF9A9A',
+    ];
+
+    $r = 2;
+    foreach ($notes as $n) {
+        $feeding = ($n['feeding'] === '1' || $n['feeding'] === 1) ? 'Yes'
+                 : (($n['feeding'] === '0' || $n['feeding'] === 0) ? 'No' : '');
+        $temper  = $n['temperament'] ?? '';
+
+        $sheet->fromArray([
+            $n['note_date'], $n['hive_name'] ?? '', $n['num_colonies'] ?? '',
+            $n['queen_species'] ?? '', $n['queen_age'] ?? '',
+            $n['comb_frames_change'] ?? '', $n['wax_foundation_change'] ?? '', $feeding,
+            $n['colony_strength'] ?? '', $n['brood_pattern_open'] ?? '', $n['brood_pattern_close'] ?? '',
+            $n['brood_pattern_type'] ?? '', $n['honey_store'] ?? '', $n['pollen_store'] ?? '',
+            $temper !== '' ? ucwords(str_replace('_', ' ', $temper)) : '',
+            $n['treatment_date'] ?? '', $n['chemical_brand'] ?? '', $n['remarks'] ?? '',
+        ], null, "A$r");
+
+        // rating columns: I, J, K, M, N
+        foreach (['I' => 'colony_strength', 'J' => 'brood_pattern_open', 'K' => 'brood_pattern_close',
+                  'M' => 'honey_store', 'N' => 'pollen_store'] as $col => $key) {
+            $c = $ratingColor($n[$key] ?? null);
+            if ($c) $paint("$col$r", $c);
+        }
+        if (isset($tempColors[$temper])) $paint("O$r", $tempColors[$temper]);
+
+        $r++;
+    }
+
+    // wrap long text columns, auto-size the rest
+    foreach (range('A', 'R') as $col) $sheet->getColumnDimension($col)->setAutoSize(true);
+    $sheet->getColumnDimension('L')->setAutoSize(false)->setWidth(35);
+    $sheet->getColumnDimension('R')->setAutoSize(false)->setWidth(45);
+    $sheet->getStyle("L2:L$r")->getAlignment()->setWrapText(true);
+    $sheet->getStyle("R2:R$r")->getAlignment()->setWrapText(true);
+    $sheet->getStyle("A2:R$r")->getAlignment()->setVertical('top');
+    $sheet->freezePane('C2');
+
+    // small legend so non-technical users know what the colors mean
+    $l = $r + 2;
+    $sheet->setCellValue("I$l", 'Legend (ratings 1-10)');
+    $sheet->getStyle("I$l")->getFont()->setBold(true);
+    $sheet->setCellValue("I" . ($l + 1), '1-3 Poor / Low');       $paint("I" . ($l + 1), 'EF9A9A');
+    $sheet->setCellValue("I" . ($l + 2), '4-7 Good / Medium');    $paint("I" . ($l + 2), 'FFF59D');
+    $sheet->setCellValue("I" . ($l + 3), '8-10 Excellent / High'); $paint("I" . ($l + 3), 'C8E6C9');
+
+    if (ob_get_length()) ob_end_clean();
+    header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    header('Content-Disposition: attachment; filename="' . $filename . '"');
+    header('Cache-Control: max-age=0');
+    (new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($ss))->save('php://output');
+    exit();
+    }
+    
     public function getNoteByDate() {
         try {
             $this->requireApiarist();

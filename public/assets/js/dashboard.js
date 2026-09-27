@@ -10,11 +10,13 @@
 })();
 
 // Configuration
+Chart.defaults.font.size = 14;   // axis ticks and tooltips
 
 let currentDays = 30;
 let chart = null;
 let refreshTimer = null;
-
+let chartRenderMode = null;   // 'live' or 'summary' — tracks what's currently rendered
+let chartHasCo2 = false;
 // FIX: Track currently selected hive sensor_id (null = show first/default)
 let currentSensorId = null;
 
@@ -213,6 +215,7 @@ async function loadHistoryData(hours) {
             renderChartLive(result.data);
         } else {
             if (chart) chart.destroy();
+            chart = null; chartRenderMode = null;   
         }
     } catch (e) { console.error('loadHistoryData error:', e); }
 }
@@ -224,32 +227,45 @@ async function loadSummaryChart(days) {
         const result   = await response.json();
         if (result.success && result.data && result.data.length > 0) {
             renderChartSummary(result.data);
+        } else {
+            if (chart) chart.destroy();
+            chart = null; chartRenderMode = null;
         }
     } catch (e) { console.error('loadSummaryChart error:', e); }
 }
 
-// Render — individual readings
 function renderChartLive(data) {
+    const hasCo2 = data.some(d => d.co2 != null && parseFloat(d.co2) > 0);
+    const labels = data.map(d => d.measurement_time ? d.measurement_time.slice(0,5) : d.timestamp);
+    const tempData = data.map(d => parseFloat(d.temperature));
+    const humData  = data.map(d => parseFloat(d.humidity));
+    const co2Data  = hasCo2 ? data.map(d => d.co2 != null ? parseFloat(d.co2) : null) : null;
+
+    // Same mode, same dataset shape → just swap the numbers, no rebuild
+    if (chart && chartRenderMode === 'live' && chartHasCo2 === hasCo2) {
+        chart.data.labels = labels;
+        chart.data.datasets[0].data = tempData;
+        chart.data.datasets[1].data = humData;
+        if (hasCo2) chart.data.datasets[2].data = co2Data;
+        chart.update('none'); // 'none' skips the re-entry animation on every refresh
+        return;
+    }
+
     const ctx = document.getElementById('historyChart').getContext('2d');
     if (chart) chart.destroy();
-    const hasCo2 = data.some(d => d.co2 != null && parseFloat(d.co2) > 0);
-    const labels  = data.map(d => d.measurement_time ? d.measurement_time.slice(0,5) : d.timestamp);
     const datasets = [{
-        label: 'Temperature (°C)',
-        data: data.map(d => parseFloat(d.temperature)),
+        label: 'Temperature (°C)', data: tempData,
         borderColor: '#2D7A3A', backgroundColor: 'rgba(45,122,58,0.06)',
         borderWidth: 2, pointRadius: 2, pointHoverRadius: 5,
         tension: 0.3, fill: true, yAxisID: 'y-temperature'
     }, {
-        label: 'Humidity (%)',
-        data: data.map(d => parseFloat(d.humidity)),
+        label: 'Humidity (%)', data: humData,
         borderColor: '#4facfe', backgroundColor: 'rgba(79,172,254,0.06)',
         borderWidth: 2, pointRadius: 2, pointHoverRadius: 5,
         tension: 0.3, fill: true, yAxisID: 'y-humidity'
     }];
     if (hasCo2) datasets.push({
-        label: 'CO₂ (ppm)',
-        data: data.map(d => d.co2 != null ? parseFloat(d.co2) : null),
+        label: 'CO₂ (ppm)', data: co2Data,
         borderColor: '#b45309', backgroundColor: 'rgba(180,83,9,0.05)',
         borderWidth: 1.5, pointRadius: 1, pointHoverRadius: 4,
         tension: 0.3, fill: false, borderDash: [4,3], yAxisID: 'y-co2', spanGaps: true
@@ -262,41 +278,56 @@ function renderChartLive(data) {
                 tooltip: { backgroundColor:'#FFFFFF', borderColor:'rgba(45,122,58,0.25)', borderWidth:1, titleColor:'#1A3320', bodyColor:'#4A7055', padding:12 } },
             scales: buildScales(hasCo2) }
     });
+    chartRenderMode = 'live';
+    chartHasCo2 = hasCo2;
 }
 
 // Render — daily averages
 function renderChartSummary(data) {
+    const hasCo2 = data.some(d => d.avg_co2 != null && parseFloat(d.avg_co2) > 0);
+    const labels  = data.map(d => d.measurement_date);
+    const tempData = data.map(d => parseFloat(d.avg_temp));
+    const humData  = data.map(d => parseFloat(d.avg_humidity));
+    const co2Data  = hasCo2 ? data.map(d => d.avg_co2 != null ? parseFloat(d.avg_co2) : null) : null;
+
+    if (chart && chartRenderMode === 'summary' && chartHasCo2 === hasCo2) {
+        chart.data.labels = labels;
+        chart.data.datasets[0].data = tempData;
+        chart.data.datasets[1].data = humData;
+        if (hasCo2) chart.data.datasets[2].data = co2Data;
+        chart.update('none');
+        return;
+    }
+
     const ctx = document.getElementById('historyChart').getContext('2d');
     if (chart) chart.destroy();
-    const hasCo2 = data.some(d => d.avg_co2 != null && parseFloat(d.avg_co2) > 0);
     const datasets = [{
-        label: 'Avg Temperature (°C)',
-        data: data.map(d => parseFloat(d.avg_temp)),
+        label: 'Avg Temperature (°C)', data: tempData,
         borderColor: '#2D7A3A', backgroundColor: 'rgba(45,122,58,0.08)',
         borderWidth: 2.5, pointRadius: 4, pointHoverRadius: 6,
         tension: 0.3, fill: true, yAxisID: 'y-temperature'
     }, {
-        label: 'Avg Humidity (%)',
-        data: data.map(d => parseFloat(d.avg_humidity)),
+        label: 'Avg Humidity (%)', data: humData,
         borderColor: '#4facfe', backgroundColor: 'rgba(79,172,254,0.08)',
         borderWidth: 2.5, pointRadius: 4, pointHoverRadius: 6,
         tension: 0.3, fill: true, yAxisID: 'y-humidity'
     }];
     if (hasCo2) datasets.push({
-        label: 'Avg CO₂ (ppm)',
-        data: data.map(d => d.avg_co2 != null ? parseFloat(d.avg_co2) : null),
+        label: 'Avg CO₂ (ppm)', data: co2Data,
         borderColor: '#b45309', backgroundColor: 'rgba(180,83,9,0.07)',
         borderWidth: 2, pointRadius: 3, pointHoverRadius: 5,
         tension: 0.3, fill: false, borderDash: [5,3], yAxisID: 'y-co2', spanGaps: true
     });
     chart = new Chart(ctx, {
-        type: 'line', data: { labels: data.map(d => d.measurement_date), datasets },
+        type: 'line', data: { labels, datasets },
         options: { responsive: true, maintainAspectRatio: false,
             interaction: { mode: 'index', intersect: false },
             plugins: { legend: { position:'top', labels:{ usePointStyle:true, padding:20, color:'#4A7055', font:{size:12,family:'Poppins'} } },
                 tooltip: { backgroundColor:'#FFFFFF', borderColor:'rgba(45,122,58,0.25)', borderWidth:1, titleColor:'#1A3320', bodyColor:'#4A7055', padding:12 } },
             scales: buildScales(hasCo2) }
     });
+    chartRenderMode = 'summary';
+    chartHasCo2 = hasCo2;
 }
 
 function buildScales(hasCo2) {
@@ -407,7 +438,14 @@ function refreshData() {
     loadCurrentData();
     if (chartMode === 'live') loadHistoryData(currentHours);
     else loadSummaryChart(currentDays);
-    loadReadingsTable();
+
+    // Only refetch whichever table tab is actually visible
+    if ($('#panelReadings').is(':visible')) {
+        loadReadingsTable();
+    } else {
+        loadDailyStats();
+    }
+
     loadAlerts();
     const refreshIcon = $('.btn-refresh i');
     refreshIcon.css('transform', 'rotate(360deg)');
@@ -439,6 +477,9 @@ function selectHive(sensorId, element) {
 
 // Calendar Functions
 function openCalendar() {
+    if (currentSensorId && $('#insp_hive_id option[value="' + currentSensorId + '"]').length) {
+        $('#insp_hive_id').val(currentSensorId);
+    }
     $('#calendarOverlay').addClass('open');
     renderCalendar();
 }
@@ -688,6 +729,7 @@ function sanitizeUnsignedInt(el) {
 async function saveCurrentNote() {
     const date = calSelectedDate;
     if (!date) { showToast('No date selected.', 'error'); return; }
+    if (!$('#insp_hive_id').val()) { showToast('Select a hive first.', 'error'); return; }
     
     const payload = {
         note_id: $('#noteId').val() ? parseInt($('#noteId').val()) : null,
@@ -956,7 +998,7 @@ function updateCalendarHiveSelect(hives) {
     const select = $('#insp_hive_id');
     if (!select.length) return;
     const currentVal = select.val();
-    let html = '<option value="">All Hives</option>';
+    let html = '';
     (hives || []).forEach(h => {
         html += `<option value="${h.sensor_id}">${escapeHtml(h.hive_name)}</option>`;
     });
@@ -964,7 +1006,7 @@ function updateCalendarHiveSelect(hives) {
     if (currentVal && select.find(`option[value="${currentVal}"]`).length) {
         select.val(currentVal);
     } else {
-        select.val('');
+        select.prop('selectedIndex', 0);
     }
 }
 
